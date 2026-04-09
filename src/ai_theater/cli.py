@@ -28,6 +28,7 @@ async def run_start(args: argparse.Namespace) -> None:
         character_manager=character_manager,
         llm_provider=provider,
         memory_store=memory_store,
+        max_turns=args.max_turns,
     )
     display = RichTheaterTUI()
     session_id = await engine.start(scene, [character.id for character in characters])

@@ -51,6 +51,8 @@ class YAMLCharacterManager:
         character: CharacterSpec,
         scene: SceneSeed,
         memory: MemoryBundle,
+        turn_count: int = 0,
+        max_turns: int = 20,
     ) -> str:
         style_rules = "\n".join(f"- {rule}" for rule in character.style_rules) or "- 自然口語"
         catchphrases = "\n".join(f"- {line}" for line in character.catchphrases) or "- 無"
@@ -140,10 +142,42 @@ class YAMLCharacterManager:
 關係備忘
 {relationship_notes}
 
+對話節奏指引（目前第 {turn_count} 回合 / 共 {max_turns} 回合）
+{self._phase_instruction(turn_count, max_turns, character)}
+
 輸出規則
 - 一律使用繁體中文。
 - 保持像聊天室即時回嘴，不要寫旁白、舞台指示、條列、JSON。
 - {verbosity_instruction}
 - 可以點名別人、回應觀眾，但不要脫離你的人設。
 - 只輸出你這一輪真正要說的台詞，不要加上名字前綴。
+- 重要：不要每次都用攻擊語氣。可以提問、岔題、自嘲、說故事、突然沉默、提起共同經驗。讓對話有節奏變化。
 """.strip()
+
+    @staticmethod
+    def _phase_instruction(turn_count: int, max_turns: int, character: CharacterSpec) -> str:
+        progress = turn_count / max(max_turns, 1)
+        if progress < 0.25:
+            return (
+                "- 現在是開場階段。先試探，不要一上來就全力攻擊。\n"
+                "- 可以先聊聊自己的經驗或最近發生的事。\n"
+                "- 用提問展開話題，不要急著下結論。"
+            )
+        elif progress < 0.5:
+            return (
+                "- 對話漸入佳境。可以開始表達立場，但也要回應別人說的話。\n"
+                "- 試著找到對方觀點裡你（稍微）認同的地方，然後再提出反論。\n"
+                "- 可以講一個親身經歷來支持你的觀點。"
+            )
+        elif progress < 0.75:
+            return (
+                "- 對話進入中後段。你可以稍微露出弱點或承認一些事。\n"
+                "- 不需要每句都反駁。可以岔開話題、開玩笑、或突然聊別的。\n"
+                "- 如果你的 weaknesses 清單有東西，現在可以『不小心』說出來。"
+            )
+        else:
+            return (
+                "- 快結束了。試著做一個稍微有結論感的發言。\n"
+                "- 可以是讓步、總結、或一個出人意料的觀點轉變。\n"
+                "- 也可以用一句幽默的話收尾，不一定要嚴肅。"
+            )

@@ -36,12 +36,14 @@ class SimpleConversationEngine(ConversationEngine):
         llm_provider: LLMProvider,
         memory_store: MemoryStore,
         context_window: int = 12,
+        max_turns: int = 20,
         random_source: Random | None = None,
     ) -> None:
         self._character_manager = character_manager
         self._llm_provider = llm_provider
         self._memory_store = memory_store
         self._context_window = context_window
+        self._max_turns = max_turns
         self._random = random_source or Random()
         self._sessions: dict[str, SessionState] = {}
 
@@ -95,7 +97,16 @@ class SimpleConversationEngine(ConversationEngine):
             related_ids=related_ids,
             session_id=session_id,
         )
-        system_prompt = await self._character_manager.build_prompt(speaker, state.scene, memory)
+        # Pass turn progress for phase-aware prompting
+        build_prompt = self._character_manager.build_prompt
+        import inspect
+        if "turn_count" in inspect.signature(build_prompt).parameters:
+            system_prompt = await build_prompt(
+                speaker, state.scene, memory,
+                turn_count=state.turn_count, max_turns=self._max_turns,
+            )
+        else:
+            system_prompt = await build_prompt(speaker, state.scene, memory)
         response_text = await self._llm_provider.generate(
             model_profile=speaker.model_profile,
             system=system_prompt,

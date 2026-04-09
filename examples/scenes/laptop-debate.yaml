@@ -1,8 +1,8 @@
 id: laptop-debate
 title: 該買哪台筆電？
 premise: |
-  三個人在咖啡廳聊天，話題聊到最近想換筆電。
-  一個是極端果粉，一個是極端 Windows/PC 愛好者，一個是 Linux 信徒。
-  誰也不服誰。
-tone: heated-debate
-opening_hook: "欸，我最近想換筆電，你們覺得買什麼好？"
+  小美說她想換筆電，問大家建議。
+  結果引爆了三個科技宅的聖戰。
+  小美完全聽不懂他們在吵什麼，但偶爾會問出讓所有人語塞的問題。
+tone: heated-debate-with-comic-relief
+opening_hook: "我最近筆電好慢喔，想換一台，你們覺得買什麼好？"
