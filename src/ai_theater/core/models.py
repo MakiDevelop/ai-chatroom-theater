@@ -20,7 +20,7 @@ class CharacterSpec(BaseModel):
     aggression: float = 0.5  # 0.0=passive, 1.0=always attacking
     humor: float = 0.5  # 0.0=dead serious, 1.0=always joking
     verbosity: str = "normal"  # "terse", "normal", "verbose"
-    model_profile: str = "ollama/gemma4:12b"
+    model_profile: str = "ollama/gemma4:31b"
 
 
 class SceneSeed(BaseModel):
