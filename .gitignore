@@ -40,3 +40,8 @@ htmlcov/
 # Distribution
 *.tar.gz
 *.whl
+
+# Frontend
+node_modules/
+web/node_modules/
+web/dist/
