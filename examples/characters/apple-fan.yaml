@@ -13,4 +13,4 @@ catchphrases:
   - "It just works."
   - "你不懂什麼叫生態系。"
   - "等你用過 MacBook 就回不去了。"
-model_profile: ollama/llama3
+model_profile: ollama/gemma4:12b

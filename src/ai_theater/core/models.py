@@ -13,7 +13,7 @@ class CharacterSpec(BaseModel):
     persona: str
     style_rules: list[str] = []
     catchphrases: list[str] = []
-    model_profile: str = "ollama/llama3"
+    model_profile: str = "ollama/gemma4:12b"
 
 
 class SceneSeed(BaseModel):

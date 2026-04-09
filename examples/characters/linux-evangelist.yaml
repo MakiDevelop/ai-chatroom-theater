@@ -13,4 +13,4 @@ catchphrases:
   - "I use Arch, btw."
   - "你知道自由軟體的意義嗎？"
   - "一行指令就搞定了，你們在那邊點來點去。"
-model_profile: ollama/llama3
+model_profile: ollama/gemma4:12b

@@ -13,4 +13,4 @@ catchphrases:
   - "你那台多少錢？我同樣價格效能翻三倍。"
   - "RGB 才是本體。"
   - "跑個 benchmark 再來跟我嘴。"
-model_profile: ollama/llama3
+model_profile: ollama/gemma4:12b
