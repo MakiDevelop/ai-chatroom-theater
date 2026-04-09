@@ -156,9 +156,8 @@ class SimpleConversationEngine(ConversationEngine):
     @staticmethod
     def _format_message(state: SessionState, event: TurnEvent) -> str:
         if event.speaker_id == AUDIENCE_ID:
-            speaker_name = "觀眾"
-        else:
-            speaker_name = state.characters[event.speaker_id].name
+            return f"【觀眾插話，所有角色必須回應這個新話題】觀眾：{event.text}"
+        speaker_name = state.characters[event.speaker_id].name
         return f"{speaker_name}：{event.text}"
 
     @staticmethod

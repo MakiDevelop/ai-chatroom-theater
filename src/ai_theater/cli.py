@@ -32,6 +32,14 @@ async def run_start(args: argparse.Namespace) -> None:
     display = RichTheaterTUI()
     session_id = await engine.start(scene, [character.id for character in characters])
 
+    # Transcript log
+    transcript: list[str] = []
+    transcript.append(f"# {scene.title}")
+    transcript.append(f"> {scene.premise.strip()}")
+    transcript.append(f"> 調性: {scene.tone}")
+    transcript.append(f"> 演員: {', '.join(c.name for c in characters)}")
+    transcript.append("")
+
     display.render_scene(
         scene=scene,
         characters=characters,
@@ -40,6 +48,8 @@ async def run_start(args: argparse.Namespace) -> None:
     )
     if scene.opening_hook.strip():
         display.render_audience(scene.opening_hook.strip(), label="開場")
+        transcript.append(f"**觀眾（開場）**：{scene.opening_hook.strip()}")
+        transcript.append("")
 
     input_queue: asyncio.Queue[tuple[str, str | None]] = asyncio.Queue()
     input_task = asyncio.create_task(_audience_input_loop(input_queue))
@@ -53,6 +63,7 @@ async def run_start(args: argparse.Namespace) -> None:
                 engine=engine,
                 display=display,
                 session_id=session_id,
+                transcript=transcript,
             )
             if quit_requested or turn_index >= args.max_turns:
                 break
@@ -67,11 +78,14 @@ async def run_start(args: argparse.Namespace) -> None:
                 turn_index=turn_index,
                 max_turns=args.max_turns,
             )
+            transcript.append(f"**{speaker.name}**（{turn_index}/{args.max_turns}）：{event.text}")
+            transcript.append("")
             quit_requested = await _wait_between_turns(
                 input_queue=input_queue,
                 engine=engine,
                 display=display,
                 session_id=session_id,
+                transcript=transcript,
             )
     finally:
         input_task.cancel()
@@ -82,6 +96,17 @@ async def run_start(args: argparse.Namespace) -> None:
     end_message = "觀眾要求收尾。" if quit_requested else "已達最大回合數。"
     display.render_end(end_message)
 
+    # Save transcript
+    if args.output:
+        output_path = Path(args.output).expanduser().resolve()
+    else:
+        from datetime import datetime
+
+        output_path = Path(f"transcript-{datetime.now().strftime('%Y%m%d-%H%M%S')}.md")
+    transcript.append(f"---\n*{end_message}*")
+    output_path.write_text("\n".join(transcript), encoding="utf-8")
+    display.console.print(f"\n[bold green]Transcript saved → {output_path}[/]")
+
 
 async def _wait_between_turns(
     *,
@@ -89,6 +114,7 @@ async def _wait_between_turns(
     engine: SimpleConversationEngine,
     display: RichTheaterTUI,
     session_id: str,
+    transcript: list[str] | None = None,
     delay: float = 0.4,
 ) -> bool:
     deadline = asyncio.get_running_loop().time() + delay
@@ -98,6 +124,7 @@ async def _wait_between_turns(
             engine=engine,
             display=display,
             session_id=session_id,
+            transcript=transcript,
         )
         if quit_requested:
             return True
@@ -111,6 +138,7 @@ async def _drain_input_queue(
     engine: SimpleConversationEngine,
     display: RichTheaterTUI,
     session_id: str,
+    transcript: list[str] | None = None,
 ) -> bool:
     quit_requested = False
     while True:
@@ -124,34 +152,42 @@ async def _drain_input_queue(
         elif action == "say" and payload:
             event = await engine.inject_audience(session_id, payload)
             display.render_audience(event.text)
+            if transcript is not None:
+                transcript.append(f"**觀眾**：{event.text}")
+                transcript.append("")
 
     return quit_requested
 
 
 async def _audience_input_loop(input_queue: asyncio.Queue[tuple[str, str | None]]) -> None:
-    try:
-        from aioconsole import ainput
-    except ImportError as exc:
-        raise RuntimeError("aioconsole is required for interactive audience input.") from exc
+    import threading
 
-    try:
-        while True:
-            raw_input = (await ainput("")).strip()
-            if raw_input.lower() == "q":
-                await input_queue.put(("quit", None))
-                return
+    loop = asyncio.get_running_loop()
 
-            if not raw_input:
-                raw_input = (await ainput("插話 > ")).strip()
-                if not raw_input:
-                    continue
-                if raw_input.lower() == "q":
-                    await input_queue.put(("quit", None))
+    def _thread_reader() -> None:
+        try:
+            while True:
+                raw = input("").strip()
+                if raw.lower() == "q":
+                    loop.call_soon_threadsafe(input_queue.put_nowait, ("quit", None))
                     return
+                if not raw:
+                    raw = input("插話 > ").strip()
+                    if not raw:
+                        continue
+                    if raw.lower() == "q":
+                        loop.call_soon_threadsafe(input_queue.put_nowait, ("quit", None))
+                        return
+                loop.call_soon_threadsafe(input_queue.put_nowait, ("say", raw))
+        except (EOFError, KeyboardInterrupt):
+            loop.call_soon_threadsafe(input_queue.put_nowait, ("quit", None))
 
-            await input_queue.put(("say", raw_input))
-    except (EOFError, KeyboardInterrupt):
-        await input_queue.put(("quit", None))
+    thread = threading.Thread(target=_thread_reader, daemon=True)
+    thread.start()
+
+    # Keep the coroutine alive until thread exits
+    while thread.is_alive():
+        await asyncio.sleep(0.2)
 
 
 def _load_scene(path: str) -> SceneSeed:
@@ -183,6 +219,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--ollama-url",
         default="http://localhost:11434",
         help="Base URL for the Ollama server.",
+    )
+    start_parser.add_argument(
+        "--output",
+        default=None,
+        help="Path to save transcript markdown. Defaults to transcript-<timestamp>.md",
     )
     return parser
 

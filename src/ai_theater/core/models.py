@@ -13,7 +13,14 @@ class CharacterSpec(BaseModel):
     persona: str
     style_rules: list[str] = []
     catchphrases: list[str] = []
-    model_profile: str = "ollama/gemma4:12b"
+    triggers: list[str] = []  # topics that make this character fired up
+    weaknesses: list[str] = []  # topics they secretly agree with opponents
+    forbidden: list[str] = []  # things this character would never say
+    emoji_style: str = ""  # e.g. "heavy", "none", "occasional"
+    aggression: float = 0.5  # 0.0=passive, 1.0=always attacking
+    humor: float = 0.5  # 0.0=dead serious, 1.0=always joking
+    verbosity: str = "normal"  # "terse", "normal", "verbose"
+    model_profile: str = "ollama/gemma4:31b"
 
 
 class SceneSeed(BaseModel):

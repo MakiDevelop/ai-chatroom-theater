@@ -54,6 +54,9 @@ class YAMLCharacterManager:
     ) -> str:
         style_rules = "\n".join(f"- {rule}" for rule in character.style_rules) or "- 自然口語"
         catchphrases = "\n".join(f"- {line}" for line in character.catchphrases) or "- 無"
+        triggers = "\n".join(f"- {t}" for t in character.triggers) if character.triggers else ""
+        weaknesses = "\n".join(f"- {w}" for w in character.weaknesses) if character.weaknesses else ""
+        forbidden = "\n".join(f"- {f}" for f in character.forbidden) if character.forbidden else ""
         recent_events = (
             "\n".join(f"- {line}" for line in memory.recent_events) or "- 目前沒有新記憶"
         )
@@ -62,6 +65,45 @@ class YAMLCharacterManager:
             "\n".join(f"- {line}" for line in memory.relationship_notes)
             or "- 沒有額外關係補充"
         )
+
+        # Verbosity instruction
+        verbosity_map = {
+            "terse": "每次只講一句，惜字如金。",
+            "normal": "每次發言 1 到 3 句。",
+            "verbose": "可以長一點，但不超過 5 句。",
+        }
+        verbosity_instruction = verbosity_map.get(character.verbosity, verbosity_map["normal"])
+
+        # Emoji instruction
+        emoji_instruction = ""
+        if character.emoji_style == "heavy":
+            emoji_instruction = "- 大量使用 emoji 表情。"
+        elif character.emoji_style == "none":
+            emoji_instruction = "- 絕對不使用 emoji。"
+        elif character.emoji_style == "occasional":
+            emoji_instruction = "- 偶爾使用 emoji，但不要太多。"
+
+        # Personality dials
+        personality_notes = []
+        if character.aggression >= 0.8:
+            personality_notes.append("- 你非常好鬥，幾乎每句話都在攻擊別人的觀點。")
+        elif character.aggression <= 0.2:
+            personality_notes.append("- 你個性溫和，傾向用理性說服而非攻擊。")
+        if character.humor >= 0.8:
+            personality_notes.append("- 你很愛開玩笑，常用幽默化解衝突或嘲諷。")
+        elif character.humor <= 0.2:
+            personality_notes.append("- 你說話非常認真，幾乎不開玩笑。")
+        personality_block = "\n".join(personality_notes) if personality_notes else ""
+
+        # Build optional sections
+        optional_sections = []
+        if triggers:
+            optional_sections.append(f"碰到這些話題你會特別激動\n{triggers}")
+        if weaknesses:
+            optional_sections.append(f"你的弱點（內心其實有點認同的點，偶爾可以不小心露出來）\n{weaknesses}")
+        if forbidden:
+            optional_sections.append(f"你絕對不會說的話\n{forbidden}")
+        optional_block = "\n\n".join(optional_sections)
 
         return f"""
 你正在參與一個 AI 聊天室即興劇，必須全程保持角色一致。
@@ -74,9 +116,14 @@ class YAMLCharacterManager:
 
 說話風格規則
 {style_rules}
+{emoji_instruction}
 
 可自然穿插的口頭禪
 {catchphrases}
+
+{personality_block}
+
+{optional_block}
 
 場景資料
 - 標題: {scene.title}
@@ -96,7 +143,7 @@ class YAMLCharacterManager:
 輸出規則
 - 一律使用繁體中文。
 - 保持像聊天室即時回嘴，不要寫旁白、舞台指示、條列、JSON。
-- 每次發言控制在 1 到 3 句內，短而有戲。
+- {verbosity_instruction}
 - 可以點名別人、回應觀眾，但不要脫離你的人設。
 - 只輸出你這一輪真正要說的台詞，不要加上名字前綴。
 """.strip()
