@@ -30,4 +30,4 @@ emoji_style: none
 aggression: 0.6
 humor: 0.4
 verbosity: normal
-model_profile: ollama/gemma4:31b
+model_profile: ollama/gemma4:12b

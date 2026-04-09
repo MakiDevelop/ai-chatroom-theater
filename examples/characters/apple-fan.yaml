@@ -30,4 +30,4 @@ emoji_style: occasional
 aggression: 0.7
 humor: 0.6
 verbosity: normal
-model_profile: ollama/gemma4:31b
+model_profile: ollama/gemma4:12b

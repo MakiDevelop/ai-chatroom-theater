@@ -31,4 +31,4 @@ emoji_style: heavy
 aggression: 0.9
 humor: 0.7
 verbosity: terse
-model_profile: ollama/gemma4:31b
+model_profile: ollama/gemma4:12b
