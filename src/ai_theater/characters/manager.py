@@ -57,7 +57,9 @@ class YAMLCharacterManager:
         style_rules = "\n".join(f"- {rule}" for rule in character.style_rules) or "- 自然口語"
         catchphrases = "\n".join(f"- {line}" for line in character.catchphrases) or "- 無"
         triggers = "\n".join(f"- {t}" for t in character.triggers) if character.triggers else ""
-        weaknesses = "\n".join(f"- {w}" for w in character.weaknesses) if character.weaknesses else ""
+        weaknesses = (
+            "\n".join(f"- {w}" for w in character.weaknesses) if character.weaknesses else ""
+        )
         forbidden = "\n".join(f"- {f}" for f in character.forbidden) if character.forbidden else ""
         recent_events = (
             "\n".join(f"- {line}" for line in memory.recent_events) or "- 目前沒有新記憶"
@@ -151,7 +153,8 @@ class YAMLCharacterManager:
 - {verbosity_instruction}
 - 可以點名別人、回應觀眾，但不要脫離你的人設。
 - 只輸出你這一輪真正要說的台詞，不要加上名字前綴。
-- 重要：不要每次都用攻擊語氣。可以提問、岔題、自嘲、說故事、突然沉默、提起共同經驗。讓對話有節奏變化。
+- 重要：不要每次都用攻擊語氣。
+- 可以提問、岔題、自嘲、說故事、突然沉默、提起共同經驗。讓對話有節奏變化。
 """.strip()
 
     @staticmethod

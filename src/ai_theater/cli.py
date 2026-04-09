@@ -15,6 +15,7 @@ from ai_theater.core.models import SceneSeed
 from ai_theater.display.rich_tui import RichTheaterTUI
 from ai_theater.memory.in_memory import InMemoryStore
 from ai_theater.providers.ollama import OllamaProvider
+from ai_theater.server import create_app
 
 
 async def run_start(args: argparse.Namespace) -> None:
@@ -226,6 +227,34 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to save transcript markdown. Defaults to transcript-<timestamp>.md",
     )
+
+    serve_parser = subparsers.add_parser("serve", help="Run the FastAPI backend.")
+    serve_parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Host interface for the HTTP server.",
+    )
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port for the HTTP server.",
+    )
+    serve_parser.add_argument(
+        "--characters-dir",
+        default="examples/characters",
+        help="Directory containing character YAML files.",
+    )
+    serve_parser.add_argument(
+        "--scenes-dir",
+        default="examples/scenes",
+        help="Directory containing scene YAML files.",
+    )
+    serve_parser.add_argument(
+        "--ollama-url",
+        default="http://localhost:11434",
+        help="Base URL for the Ollama server.",
+    )
     return parser
 
 
@@ -234,6 +263,15 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "start":
         asyncio.run(run_start(args))
+    if args.command == "serve":
+        import uvicorn
+
+        app = create_app(
+            characters_dir=args.characters_dir,
+            scenes_dir=args.scenes_dir,
+            ollama_url=args.ollama_url,
+        )
+        uvicorn.run(app, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
