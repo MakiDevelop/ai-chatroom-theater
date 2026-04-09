@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncIterator, Protocol, Sequence
+from collections.abc import AsyncIterator, Sequence
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from .models import CharacterSpec, MemoryBundle, SceneSeed, TurnEvent
@@ -11,18 +12,22 @@ if TYPE_CHECKING:
 class CharacterManager(Protocol):
     async def get(self, character_id: str) -> CharacterSpec: ...
     async def list_all(self) -> list[CharacterSpec]: ...
-    async def build_prompt(self, character_id: str, scene: SceneSeed) -> str: ...
+    async def build_prompt(
+        self,
+        character: CharacterSpec,
+        scene: SceneSeed,
+        memory: MemoryBundle,
+    ) -> str: ...
 
 
 class LLMProvider(Protocol):
     async def generate(
         self,
         *,
-        model: str,
+        model_profile: str,
         system: str,
-        messages: Sequence[dict],
-        json_schema: dict | None = None,
-    ) -> dict: ...
+        messages: Sequence[dict[str, str]],
+    ) -> str: ...
 
 
 class MemoryStore(Protocol):
@@ -53,6 +58,6 @@ class SceneDirector(Protocol):
 
 class ConversationEngine(Protocol):
     async def start(self, scene: SceneSeed, character_ids: list[str]) -> str: ...
-    async def inject_audience(self, session_id: str, text: str) -> None: ...
+    async def inject_audience(self, session_id: str, text: str) -> TurnEvent: ...
     async def step(self, session_id: str) -> TurnEvent: ...
     async def stream(self, session_id: str) -> AsyncIterator[TurnEvent]: ...

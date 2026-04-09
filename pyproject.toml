@@ -17,14 +17,11 @@ classifiers = [
     "Topic :: Games/Entertainment :: Simulation",
 ]
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.34",
     "pydantic>=2.0",
-    "litellm>=1.50",
-    "rich>=13.0",
     "httpx>=0.28",
-    "sqlalchemy>=2.0",
-    "alembic>=1.14",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "aioconsole>=0.7",
 ]
 
 [project.optional-dependencies]
