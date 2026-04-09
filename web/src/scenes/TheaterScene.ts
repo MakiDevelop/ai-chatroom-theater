@@ -19,7 +19,7 @@ import type {
   TheaterSceneData,
   TurnMessage,
 } from "../types";
-import { CharacterSpots } from "../ui/CharacterSpots";
+import { CharacterBustUps } from "../ui/CharacterBustUps";
 import { DialogBox } from "../ui/DialogBox";
 
 const AUDIENCE_OVERLAY_ID = "audience-overlay";
@@ -29,31 +29,57 @@ const CHARACTER_IDS = [
   "linux-evangelist",
   "normie",
 ] as const;
-const CHARACTER_EMOTIONS: CharacterEmotion[] = ["neutral", "excited", "upset"];
-const EXCITED_KEYWORDS = ["哈", "笑", "讚", "好", "棒", "！", "😂", "😄", "XD", "haha"];
-const UPSET_KEYWORDS = [
+const CHARACTER_EMOTIONS: CharacterEmotion[] = [
+  "neutral",
+  "happy",
+  "angry",
+  "sad",
+  "joy",
+];
+const ANGRY_KEYWORDS = [
   "垃圾",
   "爛",
-  "不",
-  "怒",
   "嗆",
   "盤子",
   "藍屏",
   "閉嘴",
-  "笑死",
+  "滾",
+  "廢物",
+  "不要臉",
 ];
+const JOY_KEYWORDS = ["哈哈", "笑死", "xd", "haha", "😂", "😆", "lol", "wwww"];
+const HAPPY_KEYWORDS = ["讚", "好", "棒", "厲害", "同意", "有道理", "沒錯", "👍", "！"];
+const SAD_KEYWORDS = ["唉", "算了", "無奈", "可惜", "嘆", "沒辦法", "qq", "😢"];
 
 function inferCharacterEmotion(text: string): CharacterEmotion {
   const normalizedText = text.toLowerCase();
 
-  if (UPSET_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))) {
-    return "upset";
+  if (ANGRY_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))) {
+    return "angry";
   }
 
-  if (
-    EXCITED_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))
-  ) {
-    return "excited";
+  if (JOY_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))) {
+    return "joy";
+  }
+
+  if (HAPPY_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))) {
+    return "happy";
+  }
+
+  if (SAD_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))) {
+    return "sad";
+  }
+
+  return "neutral";
+}
+
+function inferTargetEmotion(speakerEmotion: CharacterEmotion): CharacterEmotion {
+  if (speakerEmotion === "angry") {
+    return "sad";
+  }
+
+  if (speakerEmotion === "joy") {
+    return "happy";
   }
 
   return "neutral";
@@ -64,7 +90,7 @@ export class TheaterScene extends Phaser.Scene {
 
   private dialogBox!: DialogBox;
 
-  private characterSpots!: CharacterSpots;
+  private bustUps!: CharacterBustUps;
 
   private client: WebSocketClient | null = null;
 
@@ -116,7 +142,7 @@ export class TheaterScene extends Phaser.Scene {
     this.drawBackdrop();
     this.createHeader();
 
-    this.characterSpots = new CharacterSpots(this, this.sessionData.characters);
+    this.bustUps = new CharacterBustUps(this, this.sessionData.characters);
     this.dialogBox = new DialogBox(
       this,
       (GAME_WIDTH - DIALOG_BOX_WIDTH) / 2,
@@ -158,60 +184,37 @@ export class TheaterScene extends Phaser.Scene {
   }
 
   private drawBackdrop(): void {
-    const sky = this.add.graphics();
+    const backdrop = this.add.graphics();
 
     for (let index = 0; index < 16; index += 1) {
       const color = Phaser.Display.Color.Interpolate.ColorWithColor(
-        Phaser.Display.Color.HexStringToColor("#08111f"),
-        Phaser.Display.Color.HexStringToColor("#1c3a68"),
+        Phaser.Display.Color.HexStringToColor("#060c17"),
+        Phaser.Display.Color.HexStringToColor("#182642"),
         15,
         index,
       );
-      sky.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), 1);
-      sky.fillRect(0, index * 22, GAME_WIDTH, 24);
+      backdrop.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), 1);
+      backdrop.fillRect(0, index * 38, GAME_WIDTH, 40);
     }
 
-    const stars = this.add.graphics();
-    for (let index = 0; index < 36; index += 1) {
-      const x = 24 + ((index * 173) % 752);
-      const y = 18 + ((index * 47) % 140);
-      stars.fillStyle(0xe9f1ff, index % 4 === 0 ? 0.5 : 0.2);
-      stars.fillRect(x, y, 2, 2);
+    const rays = this.add.graphics();
+    const rayOriginX = GAME_WIDTH / 2;
+    const rayOriginY = 216;
+
+    rays.lineStyle(3, 0x9aaed8, 0.05);
+    for (let index = 0; index < 18; index += 1) {
+      const angle = Phaser.Math.DegToRad(-74 + index * 8.7);
+      const x = rayOriginX + Math.cos(angle) * 560;
+      const y = rayOriginY + Math.sin(angle) * 560;
+      rays.beginPath();
+      rays.moveTo(rayOriginX, rayOriginY);
+      rays.lineTo(x, y);
+      rays.strokePath();
     }
 
-    const horizon = this.add.graphics();
-    horizon.fillStyle(0x132b4b, 1);
-    horizon.fillRect(0, 190, GAME_WIDTH, 60);
-    horizon.fillStyle(0x0d1f38, 1);
-    horizon.fillRect(0, 250, GAME_WIDTH, 110);
-
-    for (let index = 0; index < 5; index += 1) {
-      const mountainX = index * 180 - 40;
-      const color = 0x0b1729 + index * 0x010305;
-      horizon.fillStyle(color, 0.9);
-      horizon.fillTriangle(
-        mountainX,
-        250,
-        mountainX + 90,
-        170 - (index % 2) * 18,
-        mountainX + 180,
-        250,
-      );
-    }
-
-    const stage = this.add.graphics();
-    stage.fillStyle(0x112444, 0.95);
-    stage.fillRect(0, 300, GAME_WIDTH, 120);
-
-    for (let index = 0; index < 20; index += 1) {
-      stage.fillStyle(index % 2 === 0 ? 0x17355f : 0x0f2748, 0.96);
-      stage.fillRect(index * 40, 300, 28, 120);
-    }
-
-    const stageGlow = this.add.graphics();
-    stageGlow.fillStyle(0xffffff, 0.08);
-    stageGlow.fillRect(0, 300, GAME_WIDTH, 8);
-    stageGlow.fillRect(0, 360, GAME_WIDTH, 2);
+    const lowerShade = this.add.graphics();
+    lowerShade.fillStyle(0x050913, 0.42);
+    lowerShade.fillRect(0, 298, GAME_WIDTH, 120);
   }
 
   private createHeader(): void {
@@ -295,14 +298,15 @@ export class TheaterScene extends Phaser.Scene {
     this.lastTurnIndex = message.turn_index;
     this.maxTurns = message.max_turns;
     const speakerEmotion = inferCharacterEmotion(message.text);
+    const targetId = message.targets[0] ?? null;
+    const targetEmotion = inferTargetEmotion(speakerEmotion);
 
-    for (const character of this.sessionData.characters) {
-      const emotion =
-        character.id === message.speaker_id ? speakerEmotion : "neutral";
-      this.characterSpots.setEmotion(character.id, emotion);
-    }
-
-    this.characterSpots.setActiveSpeaker(message.speaker_id);
+    this.bustUps.showDialogue(
+      message.speaker_id,
+      targetId,
+      speakerEmotion,
+      targetEmotion,
+    );
     this.dialogBox.showMessage({
       speakerName: message.speaker_name,
       text: message.text,
@@ -312,7 +316,7 @@ export class TheaterScene extends Phaser.Scene {
   }
 
   private handleAudience(message: AudienceMessage): void {
-    this.characterSpots.setActiveSpeaker(null);
+    this.bustUps.clear();
     this.dialogBox.showMessage({
       speakerName: "觀眾",
       text: message.text,
@@ -323,7 +327,7 @@ export class TheaterScene extends Phaser.Scene {
   }
 
   private handleError(message: ErrorMessage): void {
-    this.characterSpots.setActiveSpeaker(null);
+    this.bustUps.clear();
     this.dialogBox.showMessage({
       speakerName: "系統",
       text: message.message,
@@ -336,7 +340,7 @@ export class TheaterScene extends Phaser.Scene {
 
   private handleSceneEnd(_message: SceneEndMessage): void {
     this.sceneEnded = true;
-    this.characterSpots.setActiveSpeaker(null);
+    this.bustUps.clear();
     this.connectionText.setText("");
     this.audienceButton.setVisible(false);
     this.returnButton.setVisible(true);

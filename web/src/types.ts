@@ -93,4 +93,4 @@ export interface TheaterSceneData extends CreateSessionResponse {}
 
 export type DialogTone = "speaker" | "audience" | "system" | "error";
 
-export type CharacterEmotion = "neutral" | "excited" | "upset";
+export type CharacterEmotion = "neutral" | "happy" | "angry" | "sad" | "joy";
