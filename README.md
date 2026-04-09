@@ -50,21 +50,44 @@ score = w1×被點名 + w2×仇恨值 + w3×沉默時長 + w4×人設相關度 -
 
 ## Roadmap
 
-- [x] 核心架構設計
-- [ ] MVP：2~4 角色 + Ollama + Rich TUI + 觀眾插話
-- [ ] Web UI（React + SSE）
+### Phase 1 — CLI Theater（✅ Done）
+- [x] 核心架構設計（Protocol-based, pluggable）
+- [x] MVP：2~4 角色 + Ollama (gemma4) + Rich TUI + 觀眾插話
+- [x] Speaker Selection 評分制（mention / silence / aggression）
+- [x] 四階段節奏引擎（開場試探→交鋒→露弱點→收尾）
+- [x] 角色個性化（triggers / weaknesses / forbidden / emoji / aggression / humor）
+- [x] Transcript 輸出（Markdown）
+
+### Phase 2 — 16-bit Visual Theater
+- [ ] 超級任天堂 16-bit 風格 Web 前端（Phaser / PixiJS）
+- [ ] 像素角色立繪 + 表情變化
+- [ ] Typewriter 對話框（一字一字跳出）
+- [ ] 場景背景（咖啡廳、便利商店、電梯...）
+- [ ] 8-bit 音效 + chiptune BGM
+- [ ] FastAPI backend 串接現有對話引擎
+
+### Phase 3 — AI 動畫影集（終極目標）
+- [ ] TTS 語音（每角色不同聲線）
+- [ ] 自動影片合成 pipeline（Canvas render → ffmpeg → MP4）
+- [ ] 自動上字幕
+- [ ] 每集 3-5 分鐘，全自動生成
+- [ ] 直接上傳 YouTube / Twitter / 社群
+
+### Backlog
 - [ ] LLM Director Agent（隱形導演，自動注入戲劇衝突）
+- [ ] 角色/場景解耦（場景配角色組合包）
 - [ ] SillyTavern 角色卡匯入
-- [ ] TTS 語音輸出
 - [ ] 電子雞模式（背景跑的數位水族箱）
 
 ## Tech Stack
 
-- Python 3.12+
-- FastAPI + Pydantic v2
-- LiteLLM（LLM 抽象層）
-- Rich（Terminal UI）
-- SQLite（MVP）→ PostgreSQL（未來）
+- Python 3.12+ / Pydantic v2（對話引擎）
+- Ollama + gemma4（LLM backend）
+- Rich（Phase 1 Terminal UI）
+- Phaser / PixiJS（Phase 2 Web renderer）
+- FastAPI（Phase 2+ API）
+- ffmpeg（Phase 3 影片合成）
+- SQLite（未來持久化）
 
 ## License
 
