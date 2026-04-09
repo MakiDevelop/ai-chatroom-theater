@@ -1,24 +1,18 @@
 import Phaser from "phaser";
 
 import { UI_FONT_FAMILY } from "../config";
-import type { CharacterSummary } from "../types";
+import type { CharacterEmotion, CharacterSummary } from "../types";
 
 interface SpotView {
   container: Phaser.GameObjects.Container;
-  body: Phaser.GameObjects.Graphics;
+  shadow: Phaser.GameObjects.Graphics;
+  sprite: Phaser.GameObjects.Image;
   glow: Phaser.GameObjects.Graphics;
   label: Phaser.GameObjects.Text;
   baseY: number;
   tween?: Phaser.Tweens.Tween;
-  color: number;
+  currentEmotion: CharacterEmotion;
 }
-
-const CHARACTER_COLORS: Record<string, number> = {
-  "apple-fan": 0xe74c3c,
-  "pc-master-race": 0x3498db,
-  "linux-evangelist": 0x2ecc71,
-  normie: 0xf39c12,
-};
 
 const SPOT_POSITIONS: Record<number, Array<{ x: number; y: number }>> = {
   2: [
@@ -58,7 +52,7 @@ export class CharacterSpots extends Phaser.GameObjects.Container {
   setActiveSpeaker(speakerId: string | null): void {
     for (const [id, spot] of this.spots.entries()) {
       const isActive = id === speakerId;
-      this.drawSpot(spot, isActive);
+      this.drawGlow(spot, isActive);
 
       if (isActive) {
         if (!spot.tween) {
@@ -83,6 +77,21 @@ export class CharacterSpots extends Phaser.GameObjects.Container {
     }
   }
 
+  setEmotion(characterId: string, emotion: CharacterEmotion): void {
+    const spot = this.spots.get(characterId);
+    if (!spot || spot.currentEmotion === emotion) {
+      return;
+    }
+
+    const textureKey = `sprite-${characterId}-${emotion}`;
+    if (!this.scene.textures.exists(textureKey)) {
+      return;
+    }
+
+    spot.sprite.setTexture(textureKey);
+    spot.currentEmotion = emotion;
+  }
+
   private createSpot(
     character: CharacterSummary,
     x: number,
@@ -90,7 +99,13 @@ export class CharacterSpots extends Phaser.GameObjects.Container {
   ): SpotView {
     const container = this.scene.add.container(x, y);
     const glow = this.scene.add.graphics();
-    const body = this.scene.add.graphics();
+    const shadow = this.scene.add.graphics();
+    shadow.fillStyle(0x081020, 0.36);
+    shadow.fillEllipse(0, 44, 78, 20);
+
+    const sprite = this.scene.add.image(0, 0, `sprite-${character.id}-neutral`);
+    sprite.setDisplaySize(80, 80);
+    sprite.setOrigin(0.5, 0.5);
     const label = this.scene.add.text(0, 58, character.name, {
       color: "#d8def9",
       fontFamily: UI_FONT_FAMILY,
@@ -102,38 +117,27 @@ export class CharacterSpots extends Phaser.GameObjects.Container {
 
     const view: SpotView = {
       container,
-      body,
+      shadow,
+      sprite,
       glow,
       label,
       baseY: y,
-      color: CHARACTER_COLORS[character.id] ?? 0x95a5a6,
+      currentEmotion: "neutral",
     };
 
-    container.add([glow, body, label]);
-    this.drawSpot(view, false);
+    container.add([shadow, glow, sprite, label]);
+    this.drawGlow(view, false);
     return view;
   }
 
-  private drawSpot(view: SpotView, active: boolean): void {
+  private drawGlow(view: SpotView, active: boolean): void {
     view.glow.clear();
-    view.body.clear();
 
     if (active) {
       view.glow.lineStyle(4, 0xffffff, 0.9);
-      view.glow.strokeRoundedRect(-34, -46, 68, 88, 14);
+      view.glow.strokeRoundedRect(-44, -44, 88, 88, 16);
       view.glow.fillStyle(0xffffff, 0.08);
-      view.glow.fillRoundedRect(-34, -46, 68, 88, 14);
+      view.glow.fillRoundedRect(-44, -44, 88, 88, 16);
     }
-
-    view.body.fillStyle(0x081020, 0.36);
-    view.body.fillEllipse(0, 44, 78, 20);
-
-    view.body.fillStyle(view.color, 1);
-    view.body.fillRoundedRect(-30, -40, 60, 80, 12);
-    view.body.lineStyle(2, active ? 0xffffff : 0x0f1633, 0.95);
-    view.body.strokeRoundedRect(-30, -40, 60, 80, 12);
-
-    view.body.fillStyle(0xffffff, 0.1);
-    view.body.fillRoundedRect(-20, -30, 16, 48, 8);
   }
 }

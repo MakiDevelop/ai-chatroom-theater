@@ -11,6 +11,7 @@ import {
 import { WebSocketClient } from "../network/WebSocketClient";
 import type {
   AudienceMessage,
+  CharacterEmotion,
   ConnectionErrorEvent,
   ErrorMessage,
   ReconnectEvent,
@@ -22,6 +23,41 @@ import { CharacterSpots } from "../ui/CharacterSpots";
 import { DialogBox } from "../ui/DialogBox";
 
 const AUDIENCE_OVERLAY_ID = "audience-overlay";
+const CHARACTER_IDS = [
+  "apple-fan",
+  "pc-master-race",
+  "linux-evangelist",
+  "normie",
+] as const;
+const CHARACTER_EMOTIONS: CharacterEmotion[] = ["neutral", "excited", "upset"];
+const EXCITED_KEYWORDS = ["哈", "笑", "讚", "好", "棒", "！", "😂", "😄", "XD", "haha"];
+const UPSET_KEYWORDS = [
+  "垃圾",
+  "爛",
+  "不",
+  "怒",
+  "嗆",
+  "盤子",
+  "藍屏",
+  "閉嘴",
+  "笑死",
+];
+
+function inferCharacterEmotion(text: string): CharacterEmotion {
+  const normalizedText = text.toLowerCase();
+
+  if (UPSET_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))) {
+    return "upset";
+  }
+
+  if (
+    EXCITED_KEYWORDS.some((keyword) => normalizedText.includes(keyword.toLowerCase()))
+  ) {
+    return "excited";
+  }
+
+  return "neutral";
+}
 
 export class TheaterScene extends Phaser.Scene {
   private sessionData!: TheaterSceneData;
@@ -61,6 +97,14 @@ export class TheaterScene extends Phaser.Scene {
     this.lastTurnIndex = 0;
     this.maxTurns = 0;
     this.sceneEnded = false;
+  }
+
+  preload(): void {
+    for (const id of CHARACTER_IDS) {
+      for (const emotion of CHARACTER_EMOTIONS) {
+        this.load.image(`sprite-${id}-${emotion}`, `/sprites/${id}-${emotion}.png`);
+      }
+    }
   }
 
   create(): void {
@@ -250,6 +294,14 @@ export class TheaterScene extends Phaser.Scene {
   private handleTurn(message: TurnMessage): void {
     this.lastTurnIndex = message.turn_index;
     this.maxTurns = message.max_turns;
+    const speakerEmotion = inferCharacterEmotion(message.text);
+
+    for (const character of this.sessionData.characters) {
+      const emotion =
+        character.id === message.speaker_id ? speakerEmotion : "neutral";
+      this.characterSpots.setEmotion(character.id, emotion);
+    }
+
     this.characterSpots.setActiveSpeaker(message.speaker_id);
     this.dialogBox.showMessage({
       speakerName: message.speaker_name,

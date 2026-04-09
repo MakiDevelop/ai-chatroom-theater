@@ -92,3 +92,5 @@ export interface ConnectionErrorEvent {
 export interface TheaterSceneData extends CreateSessionResponse {}
 
 export type DialogTone = "speaker" | "audience" | "system" | "error";
+
+export type CharacterEmotion = "neutral" | "excited" | "upset";
