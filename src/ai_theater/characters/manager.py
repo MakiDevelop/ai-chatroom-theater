@@ -54,6 +54,8 @@ class YAMLCharacterManager:
         turn_count: int = 0,
         max_turns: int = 20,
     ) -> str:
+        if self._is_small_model(character.model_profile):
+            return self._build_compact_prompt(character, scene, memory, turn_count, max_turns)
         style_rules = "\n".join(f"- {rule}" for rule in character.style_rules) or "- 自然口語"
         catchphrases = "\n".join(f"- {line}" for line in character.catchphrases) or "- 無"
         triggers = "\n".join(f"- {t}" for t in character.triggers) if character.triggers else ""
@@ -184,3 +186,30 @@ class YAMLCharacterManager:
                 "- 可以是讓步、總結、或一個出人意料的觀點轉變。\n"
                 "- 也可以用一句幽默的話收尾，不一定要嚴肅。"
             )
+
+    @staticmethod
+    def _is_small_model(model_profile: str) -> bool:
+        small_tags = ("e2b", ":2b", ":3b", ":4b", "1b")
+        return any(tag in model_profile.lower() for tag in small_tags)
+
+    @staticmethod
+    def _build_compact_prompt(
+        character: CharacterSpec,
+        scene: SceneSeed,
+        memory: MemoryBundle,
+        turn_count: int,
+        max_turns: int,
+    ) -> str:
+        catchphrase = character.catchphrases[0] if character.catchphrases else ""
+        recent = memory.recent_events[-3:] if memory.recent_events else []
+        recent_block = "\n".join(f"- {e}" for e in recent)
+
+        return f"""你是「{character.name}」，{character.persona.strip().split(chr(10))[0]}
+口頭禪：{catchphrase}
+場景：{scene.title}（{scene.tone}）— {scene.premise.strip().split(chr(10))[0]}
+回合 {turn_count}/{max_turns}。
+
+最近對話：
+{recent_block}
+
+規則：繁體中文、1-2句、像聊天室回嘴、不要加名字前綴、不要旁白。有個性地回應！""".strip()

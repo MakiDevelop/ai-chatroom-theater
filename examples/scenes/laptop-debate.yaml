@@ -1,8 +1,9 @@
 id: laptop-debate
 title: 該買哪台筆電？
 premise: |
-  小美說她想換筆電，問大家建議。
-  結果引爆了三個科技宅的聖戰。
-  小美完全聽不懂他們在吵什麼，但偶爾會問出讓所有人語塞的問題。
+  小美的 5 年老筆電壞了，預算 3 萬，下週要買。
+  Steve 推 MacBook Air，Kevin 說自組桌機才是王道，Tux 堅持裝 Linux 的 ThinkPad。
+  三個人越吵越兇，小美只想知道「能不能用 LINE 和 Excel」。
+  Steve 剛買了 M4 MacBook Pro 很得意，Kevin 上週組了 8 萬水冷主機，Tux 昨天又把系統搞壞重裝了。
 tone: heated-debate-with-comic-relief
-opening_hook: "我最近筆電好慢喔，想換一台，你們覺得買什麼好？"
+opening_hook: "我筆電壞掉了啦，預算大概三萬，你們覺得我該買什麼？拜託不要吵架喔。"
